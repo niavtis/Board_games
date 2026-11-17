@@ -17,6 +17,7 @@ const pid = (() => {
 let room = null; // latest room view from the server
 let lanBase = null; // shareable LAN address when hosting on localhost
 let chatSeen = 0;
+let clockOffset = 0; // server time minus local time, for duel countdowns
 
 /* ---------------- Name ---------------- */
 const nameInput = $('#name');
@@ -35,22 +36,32 @@ function requireName() {
   return false;
 }
 
+/* ---------------- Computer opponent ---------------- */
+const BOT_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4.5"/><circle cx="12" cy="3.5" r="1.2"/><circle cx="9" cy="14" r="1.3" class="eye"/><circle cx="15" cy="14" r="1.3" class="eye"/></svg>';
+const botLevel = $('#bot-level');
+botLevel.value = localStorage.getItem('botLevel') || 'medium';
+botLevel.addEventListener('change', () => localStorage.setItem('botLevel', botLevel.value));
+let botGames = new Set(); // games with a computer opponent (from /api/info)
+const vsBot = (v) => v.players.some((p) => p.bot);
+
 /* ---------------- Menu ---------------- */
 function buildMenu() {
-  const grid = $('#games');
-  grid.innerHTML = '';
+  $('#games').innerHTML = '';
+  $('#duels').innerHTML = '';
   for (const id of ORDER) {
     const G = GAMES[id];
+    const grid = G.category === 'duel' ? $('#duels') : $('#games');
     grid.append(
       h('article', { class: 'card', style: themeStyle(G) },
         h('div', { class: 'card-art', style: `--art-bg:${G.artBg || '#222838'}`, html: G.art }),
         h('h3', {}, G.name),
         h('p', {}, G.blurb),
-        h('div', { class: 'card-meta' }, h('span', {}, '2 players'), h('span', {}, G.length)),
+        h('div', { class: 'card-meta' }, h('span', {}, '2 players'), h('span', {}, G.length), G.category === 'duel' ? h('span', { class: 'live' }, 'real-time') : null),
         h('div', { class: 'card-actions' },
           h('button', { class: 'btn primary', onclick: () => create(id, true) }, 'Play online'),
           h('button', { class: 'btn', onclick: () => create(id, false) }, 'Invite friend'),
         ),
+        botGames.has(id) ? h('button', { class: 'btn bot', onclick: () => createBot(id) }, h('span', { class: 'bot-icon', html: BOT_ICON }), 'Play vs computer') : null,
       ),
     );
   }
@@ -80,6 +91,11 @@ function renderLobby(list) {
 function create(gameId, isPublic) {
   if (!requireName()) return;
   socket.emit('create', { gameId, name: myName(), isPublic }, (res) => res?.error && toast(res.error, 'error'));
+}
+
+// Practice table against the computer: starts at once, no name needed.
+function createBot(gameId) {
+  socket.emit('create', { gameId, name: myName() || 'You', bot: botLevel.value }, (res) => res?.error && toast(res.error, 'error'));
 }
 
 function join(code) {
@@ -161,7 +177,8 @@ function statusOf(v, G, ctx) {
   }
   const custom = G.status?.(st, ctx);
   if (custom) return custom;
-  return ctx.myTurn ? { text: 'Your turn', tone: 'turn' } : { text: `${other.name}’s turn`, tone: '' };
+  if (ctx.myTurn) return { text: 'Your turn', tone: 'turn' };
+  return { text: other.bot ? 'The computer is thinking…' : `${other.name}’s turn`, tone: other.bot ? 'thinking' : '' };
 }
 
 function renderPlayers(v, G) {
@@ -180,7 +197,7 @@ function renderPlayers(v, G) {
       h('div', { class: `player ${isTurn ? 'turn' : ''} ${p.connected ? '' : 'offline'}` },
         h('span', { class: 'swatch', style: `background:${G.swatches[i]}` }),
         h('div', { class: 'meta' },
-          h('div', { class: 'player-name' }, p.name, i === v.you ? h('span', { class: 'badge' }, 'you') : null, p.connected ? null : h('span', { class: 'badge' }, 'offline')),
+          h('div', { class: 'player-name' }, p.name, i === v.you ? h('span', { class: 'badge' }, 'you') : null, p.bot ? h('span', { class: 'badge bot-badge' }, 'computer') : null, p.connected ? null : h('span', { class: 'badge' }, 'offline')),
           h('div', { class: 'player-side' }, G.sides[i]),
         ),
         score ? h('div', { class: 'score' }, score.values[i], h('small', {}, score.label)) : null,
@@ -225,8 +242,10 @@ function renderRoom() {
     playing,
     names: v.players.map((p) => p.name),
     gameKey: `${v.code}:${v.gameNo}`,
-    send: (move) => socket.emit('move', move, (res) => res?.error && toast(res.error, 'error')),
+    // Pass `onResult` to handle the server's reply yourself instead of the default error toast.
+    send: (move, onResult) => socket.emit('move', move, (res) => (onResult ? onResult(res) : res?.error && toast(res.error, 'error'))),
     rerender: renderRoom,
+    clock: () => Date.now() + clockOffset,
   };
 
   applyTheme(G);
@@ -256,8 +275,11 @@ function renderRoom() {
   if (playing && st.over) {
     const mine = v.rematch[v.you], theirs = v.rematch[1 - v.you];
     rematch.disabled = mine;
-    rematch.textContent = mine ? 'Waiting for opponent…' : theirs ? 'Accept rematch' : 'Rematch';
+    rematch.textContent = vsBot(v) ? 'Play again' : mine ? 'Waiting for opponent…' : theirs ? 'Accept rematch' : 'Rematch';
   }
+  // A computer table has no one to invite or chat with.
+  $('#copy-code').hidden = vsBot(v);
+  $('#chat-form').hidden = vsBot(v);
   renderChat(v);
 }
 
@@ -290,6 +312,7 @@ socket.on('lobby', renderLobby);
 socket.on('room', (v) => {
   const wasWaiting = room && room.players.length < 2;
   room = v;
+  if (typeof v.now === 'number') clockOffset = v.now - Date.now();
   if ($('#room').hidden) showRoom();
   if (wasWaiting && v.players.length === 2) toast(`${v.players[1 - v.you].name} joined — game on!`);
   renderRoom();
@@ -299,6 +322,10 @@ fetch('/api/info')
   .then((r) => r.json())
   .then((info) => {
     if (info.lan?.length) lanBase = `http://${info.lan[0]}:${info.port}`;
+    if (info.bots?.length) {
+      botGames = new Set(info.bots);
+      buildMenu(); // add the "Play vs computer" buttons
+    }
   })
   .catch(() => {});
 

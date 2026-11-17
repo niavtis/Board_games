@@ -134,6 +134,72 @@ async function play(a, b, moves) {
   assert.equal(p1.view.state.reason, 'флот уничтожен');
   console.log('PASS sea battle');
 
+  // ---- Speed duels (real time; the server advances rounds on timers) ----
+  const until = async (cond, ms = 8000) => {
+    const t0 = Date.now();
+    while (!cond()) {
+      if (Date.now() - t0 > ms) throw new Error('timed out waiting for duel state');
+      await wait(40);
+    }
+  };
+  const live = (s) => s.view?.state?.phase === 'question';
+
+  // Flag Duel: answer hidden, wrong pick locks you out, reveal shows the answer
+  await table('flags', a, b);
+  [p0, p1] = bySeat(a, b);
+  assert.equal(p0.view.state.phase, 'countdown');
+  await until(() => live(p0) && live(p1));
+  assert.equal(p0.view.state.secret, undefined, 'answer must stay on the server');
+  assert.equal(p0.view.state.q.options.length, 4);
+  assert.ok(p0.view.state.q.flag.startsWith('<svg'));
+  const first = await call(p0, 'move', { a: 0 });
+  assert.ok(!first.error, first.error);
+  await settle();
+  if (p0.view.state.phase === 'question') {
+    // p0 was wrong: locked out, p1 can still answer
+    assert.match((await call(p0, 'move', { a: 1 })).error, /already/);
+    for (let i = 1; i < 4 && p1.view.state.phase === 'question'; i++) { await call(p1, 'move', { a: i }); await settle(); }
+  }
+  assert.equal(p0.view.state.phase, 'reveal');
+  assert.ok(Number.isInteger(p0.view.state.answer.correct));
+  assert.equal(p0.view.state.results.length, 1);
+  assert.equal(p0.view.state.score[0] + p0.view.state.score[1], p0.view.state.roundWinner === null ? 0 : 1);
+  await until(() => p0.view.state.round === 2 && live(p0), 6000);
+  console.log('PASS flag duel (hidden answer, lockout, next round on timer)');
+
+  // Word Race: wrong guess bounces, a correct anagram scores
+  await table('wordrace', a, b);
+  [p0, p1] = bySeat(a, b);
+  await until(() => live(p0));
+  assert.equal((await call(p1, 'move', { a: 'qqqqq' })).error, 'wrong');
+  const WORDS = require('../games/data/words');
+  const key = (w) => [...w.toLowerCase()].sort().join('');
+  const sol = WORDS.find((w) => key(w) === key(p1.view.state.q.letters));
+  assert.ok(!(await call(p1, 'move', { a: sol })).error);
+  await settle();
+  assert.equal(p0.view.state.roundWinner, 1);
+  assert.deepEqual(p0.view.state.score, [0, 1]);
+  console.log('PASS word race');
+
+  // Quick Draw: tapping before the signal hands the point to the opponent
+  await table('quickdraw', a, b);
+  [p0, p1] = bySeat(a, b);
+  await until(() => live(p0));
+  assert.equal(p0.view.state.q.armed, false);
+  await call(p0, 'move', {});
+  await settle();
+  assert.equal(p1.view.state.note, 'false start');
+  assert.deepEqual(p1.view.state.score, [0, 1]);
+  console.log('PASS quick draw (false start)');
+
+  // Resigning a duel stops it
+  p1.emit('resign');
+  await settle();
+  assert.equal(p0.view.state.winner, 0);
+  console.log('PASS duel resign');
+
+  await table('seabattle', a, b); // the reconnect checks below expect a fresh board game table
+
   // Reconnect with the same player id keeps the seat
   const code = a.view.code;
   a.disconnect();

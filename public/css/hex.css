@@ -1,0 +1,16 @@
+/* ---------- Hex ---------- */
+.hex { width: min(calc(var(--bs) * 1.5), 100%); }
+.hex-board { display: block; width: 100%; height: auto; overflow: visible; }
+.hex-edge { fill: none; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+.hex-edge.p0 { stroke: var(--p0); }
+.hex-edge.p1 { stroke: var(--p1); }
+.hex-cell polygon { fill: var(--panel2); stroke: var(--bg); stroke-width: 0.6; transition: fill 0.15s; }
+.hex-cell.p0 polygon { fill: var(--p0); }
+.hex-cell.p1 polygon { fill: var(--p1); }
+.hex-cell.clickable { cursor: pointer; outline: none; }
+.hex-cell.clickable:hover polygon, .hex-cell.clickable:focus-visible polygon { fill: color-mix(in srgb, var(--p0) 35%, var(--panel2)); }
+.hex-cell.clickable.me1:hover polygon, .hex-cell.clickable.me1:focus-visible polygon { fill: color-mix(in srgb, var(--p1) 35%, var(--panel2)); }
+.hex-cell.last polygon { transform-box: fill-box; transform-origin: center; animation: pop 0.25s ease-out; }
+.hex-dot { fill: rgba(255, 255, 255, 0.9); pointer-events: none; }
+.hex-cell.win polygon { stroke: #fff; stroke-width: 1.4; }
+.hex-note { margin: 0; font-size: 13px; color: var(--muted); }

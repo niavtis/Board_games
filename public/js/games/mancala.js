@@ -13,7 +13,7 @@ export default {
   name: 'Mancala',
   blurb: 'Sow seeds around the board, capture across, and fill your store.',
   length: '10 min',
-  sides: ['Red · moves first', 'Blue'],
+  sides: ['Green · moves first', 'Violet'],
   swatches: ['var(--p0)', 'var(--p1)'],
   artBg: '#2a2018',
   art: `<svg viewBox="0 0 160 90"><rect x="10" y="16" width="140" height="58" rx="29" fill="#5a3e28" stroke="#7a5638" stroke-width="2"/>
@@ -56,14 +56,12 @@ export default {
 
     const top = [5, 4, 3, 2, 1, 0].map((k) => pit(base(op) + k, false));
     const bottom = [0, 1, 2, 3, 4, 5].map((k) => pit(base(me) + k, true));
-    el.append(
-      h('div', { class: 'mancala' },
+    el.append(h('div', { class: 'mancala' },
         store(op),
         h('div', { class: 'mc-row top' }, top),
         h('div', { class: 'mc-row bottom' }, bottom),
-        store(me),
-      ),
-      last && last.captured ? h('div', { class: 'mc-note' }, `${last.by === me ? 'You' : ctx.names[last.by]} captured ${last.captured} seeds`) : null,
-    );
+      store(me),
+    ));
+    if (last && last.captured) el.append(h('div', { class: 'mc-note' }, `${last.by === me ? 'You' : ctx.names[last.by]} captured ${last.captured} seeds`));
   },
 };

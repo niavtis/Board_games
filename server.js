@@ -4,6 +4,7 @@ const path = require('path');
 const os = require('os');
 const { Server } = require('socket.io');
 const GAMES = require('./games');
+const BOTS = require('./bots');
 
 const PORT = process.env.PORT || 3100;
 const app = express();
@@ -20,7 +21,7 @@ function lanAddresses() {
 }
 
 app.get('/api/info', (req, res) => {
-  res.json({ port: PORT, lan: lanAddresses() });
+  res.json({ port: PORT, lan: lanAddresses(), bots: Object.keys(GAMES).filter(BOTS.has), botLevels: BOTS.LEVELS });
 });
 
 /* ---------------- Rooms ---------------- */
@@ -60,7 +61,7 @@ function sendRoom(room) {
       isPublic: room.isPublic,
       you: idx,
       gameNo: room.gameNo,
-      players: room.players.map((p) => ({ name: p.name, connected: !!p.socketId })),
+      players: room.players.map((p) => ({ name: p.name, connected: !!(p.socketId || p.bot), bot: p.bot || null })),
       state: room.state ? (game.view ? game.view(room.state, idx) : room.state) : null,
       rematch: room.rematch,
       chat: room.chat,
@@ -90,14 +91,55 @@ function scheduleWake(room) {
     }
     scheduleWake(room);
     sendRoom(room);
+    scheduleBot(room);
   }, Math.max(0, st.wakeAt - Date.now()));
+}
+
+/* ---------------- Bots ---------------- */
+
+const LEVEL_NAMES = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+const makeBot = (level) => ({ pid: `bot:${level}`, name: `Bot · ${LEVEL_NAMES[level]}`, socketId: null, bot: level });
+
+// A bot seat acts on its own timer. It is re-planned after every change to the game,
+// and its moves go through the same game.move() validation as a human's.
+function scheduleBot(room) {
+  clearTimeout(room.botTimer);
+  const seatNo = room.players.findIndex((p) => p.bot);
+  const st = room.state;
+  if (seatNo < 0 || !st || st.over) return;
+  const memo = (room.botMemo ||= {});
+  const plan = BOTS.plan(room.gameId, st, seatNo, room.players[seatNo].bot, memo);
+  if (!plan) return;
+  room.botTimer = setTimeout(() => {
+    if (room.state !== st || st.over) return;
+    let err;
+    try {
+      err = GAMES[room.gameId].move(st, seatNo, plan.move());
+    } catch (e) {
+      console.error('bot error', e);
+      err = 'crashed';
+    }
+    if (err && plan.soft) {
+      memo.plan = null; // a duel answer that no longer applies: sit the round out
+      return;
+    }
+    if (err) {
+      console.error(`bot could not move in ${room.gameId}: ${err}`);
+      Object.assign(st, { over: true, winner: 1 - seatNo, reason: 'the bot gave up' });
+    }
+    scheduleWake(room);
+    sendRoom(room);
+    scheduleBot(room);
+  }, plan.delay);
 }
 
 function startGame(room) {
   room.state = GAMES[room.gameId].init(Date.now());
   room.rematch = [false, false];
   room.gameNo += 1;
+  room.botMemo = {};
   scheduleWake(room);
+  scheduleBot(room);
 }
 
 function seat(socket, room, name) {
@@ -111,6 +153,10 @@ function seat(socket, room, name) {
     player = { pid, name: clean(name, 20) || 'Player', socketId: socket.id };
     room.players.push(player);
     systemMessage(room, `${player.name} joined`);
+    if (room.bot && room.players.length === 1) {
+      room.players.push(makeBot(room.bot));
+      systemMessage(room, `Playing against the computer (${LEVEL_NAMES[room.bot]})`);
+    }
     if (room.players.length === 2) startGame(room);
   }
   clearTimeout(room.timer);
@@ -125,6 +171,7 @@ function scheduleCleanup(room) {
   room.timer = setTimeout(() => {
     if (room.players.some((p) => p.socketId)) return;
     clearTimeout(room.wakeTimer);
+    clearTimeout(room.botTimer);
     rooms.delete(room.code);
   }, EMPTY_ROOM_TTL);
 }
@@ -140,7 +187,9 @@ function leaveCurrent(socket) {
   room.state = null; // remaining player waits for a new opponent
   room.rematch = [false, false];
   clearTimeout(room.wakeTimer);
-  if (room.players.length === 0) {
+  clearTimeout(room.botTimer);
+  if (room.players.every((p) => p.bot)) {
+    // empty, or nobody left but the computer
     clearTimeout(room.timer);
     rooms.delete(room.code);
   } else {
@@ -170,11 +219,14 @@ io.on('connection', (socket) => {
   socket.on('create', (data, cb) => {
     const gameId = data?.gameId;
     if (!GAMES[gameId]) return reply(cb, { error: 'Unknown game' });
+    const bot = data.bot ? (BOTS.LEVELS.includes(data.bot) ? data.bot : 'medium') : null;
+    if (bot && !BOTS.has(gameId)) return reply(cb, { error: 'No computer opponent for this game yet' });
     leaveCurrent(socket);
     const room = {
       code: newCode(),
       gameId,
-      isPublic: !!data.isPublic,
+      bot, // level of the computer opponent, or null for a table between people
+      isPublic: !bot && !!data.isPublic,
       players: [],
       state: null,
       rematch: [false, false],
@@ -213,6 +265,7 @@ io.on('connection', (socket) => {
     reply(cb, { ok: true });
     scheduleWake(room);
     sendRoom(room);
+    scheduleBot(room);
   });
 
   socket.on('resign', () => {
@@ -221,6 +274,7 @@ io.on('connection', (socket) => {
     Object.assign(room.state, { over: true, winner: 1 - idx, reason: 'resignation' });
     systemMessage(room, `${room.players[idx].name} resigned`);
     clearTimeout(room.wakeTimer);
+    clearTimeout(room.botTimer);
     sendRoom(room);
   });
 
@@ -228,6 +282,7 @@ io.on('connection', (socket) => {
     const { room, idx } = current(socket);
     if (!room || !room.state || !room.state.over || room.players.length < 2) return;
     room.rematch[idx] = true;
+    room.players.forEach((p, i) => p.bot && (room.rematch[i] = true)); // the computer is always up for another
     if (room.rematch[0] && room.rematch[1]) {
       room.players.reverse(); // swap who goes first
       startGame(room);

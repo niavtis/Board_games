@@ -1,12 +1,12 @@
 {
   "name": "tablo",
   "version": "1.0.0",
-  "description": "Online two-player board games: Sea Battle, Chess, Checkers, Tic Tac Toe, Connect Four, Reversi, Gomoku, Dots & Boxes",
+  "description": "Online two-player games: 12 board games (Chess, Sea Battle, Mancala, Hex, ...) and 5 real-time speed duels (flags, capitals, words, maths, reflexes)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node tests/chess-perft.js && node tests/sim.js"
+    "test": "node tests/chess-perft.js && for f in tests/rules-*.js; do node $f || exit 1; done && node tests/sim.js && node tests/bots.js && node tests/bot-room.js"
   },
   "engines": { "node": ">=18" },
   "dependencies": {

@@ -37,17 +37,17 @@ function edges(n) {
 }
 
 const hexArt = (() => {
-  const cells = [];
-  const red = new Set(['0,2', '1,2', '2,1', '3,1']), blue = new Set(['1,3', '2,2', '2,3', '3,4']);
-  for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) {
-    const x = 38 + c * 14 + r * 7, y = 18 + r * 12.2;
+  // Mini 5×5 board drawn with the same geometry as the real one.
+  const n = 5, red = new Set(['0,2', '1,2', '2,1', '3,1', '4,1']), blue = new Set(['1,3', '2,2', '2,3', '3,3']);
+  const e = edges(n);
+  const line = (list, col) => `<polyline points="${pts(list)}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  let out = line(e.top, '#43e08a') + line(e.bottom, '#43e08a') + line(e.left, '#a07aff') + line(e.right, '#a07aff');
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
     const k = `${r},${c}`;
-    const fill = red.has(k) ? '#ff6b57' : blue.has(k) ? '#45b0ff' : '#2a3040';
-    const p = [0, 1, 2, 3, 4, 5].map((i) => { const a = (Math.PI / 180) * (60 * i - 90); return `${(x + 7.4 * Math.cos(a)).toFixed(1)},${(y + 7.4 * Math.sin(a)).toFixed(1)}`; }).join(' ');
-    cells.push(`<polygon points="${p}" fill="${fill}"/>`);
+    const fill = red.has(k) ? '#43e08a' : blue.has(k) ? '#a07aff' : '#2a2140';
+    out += `<polygon points="${pts([0, 1, 2, 3, 4, 5].map((i) => vert(r, c, i, S * 0.9)))}" fill="${fill}"/>`;
   }
-  return `<svg viewBox="0 0 160 90"><path d="M30 8h86" stroke="#ff6b57" stroke-width="3" stroke-linecap="round"/><path d="M52 84h86" stroke="#ff6b57" stroke-width="3" stroke-linecap="round"/>
-    <path d="M30 10L52 82" stroke="#45b0ff" stroke-width="3" stroke-linecap="round"/><path d="M116 10L138 82" stroke="#45b0ff" stroke-width="3" stroke-linecap="round"/>${cells.join('')}</svg>`;
+  return `<svg viewBox="0 0 160 90"><g transform="translate(22 4) scale(0.8)">${out}</g></svg>`;
 })();
 
 export default {
@@ -55,14 +55,14 @@ export default {
   name: 'Hex',
   blurb: 'Build an unbroken chain between your two sides. Someone always wins — no draws.',
   length: '10 min',
-  sides: ['Red · top ↔ bottom · moves first', 'Blue · left ↔ right'],
+  sides: ['Green · top ↔ bottom · moves first', 'Violet · left ↔ right'],
   swatches: ['var(--p0)', 'var(--p1)'],
-  artBg: '#1b2030',
+  artBg: '#17122a',
   art: hexArt,
   rules: [
     'Take turns placing a stone on any empty hexagon.',
-    'Red links the top and bottom edges, Blue links the left and right edges.',
-    'Pie rule: on Blue’s first turn, Blue may swap and take over Red’s opening stone.',
+    'Green links the top and bottom edges, Violet links the left and right edges.',
+    'Pie rule: on Violet’s first turn, Violet may swap and take over Green’s opening stone.',
     'The board can never end in a draw — someone always connects.',
   ],
   status(v, ctx) {
@@ -98,9 +98,9 @@ export default {
     }
     el.append(h('div', { class: 'hex' }, svg));
     if (v.canSwap && ctx.myTurn) {
-      el.append(h('button', { class: 'btn', onclick: () => ctx.send({ swap: true }) }, 'Swap — take Red’s opening stone'));
+      el.append(h('button', { class: 'btn', onclick: () => ctx.send({ swap: true }) }, 'Swap — take Green’s opening stone'));
     } else if (v.swapped && v.moves === 2) {
-      el.append(h('p', { class: 'hex-note' }, `${ctx.names[1] || 'Blue'} used the swap rule`));
+      el.append(h('p', { class: 'hex-note' }, `${ctx.names[1] || 'Violet'} used the swap rule`));
     }
   },
 };

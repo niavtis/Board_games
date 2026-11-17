@@ -4,9 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tablo — Online Board Games</title>
-  <meta name="description" content="Play classic board games online with a friend: Sea Battle, Chess, Checkers, Tic Tac Toe, Connect Four, Reversi, Gomoku and Dots & Boxes." />
+  <meta name="description" content="Play board games and live speed duels online with a friend: Chess, Sea Battle, Mancala, Hex, Flag Duel, Word Race and more." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2343e08a'/><g fill='%2304210f'><rect x='5' y='5' width='6' height='6' rx='1.5'/><rect x='13' y='5' width='6' height='6' rx='1.5'/><rect x='21' y='5' width='6' height='6' rx='1.5'/><rect x='13' y='13' width='6' height='6' rx='1.5'/><rect x='13' y='21' width='6' height='6' rx='1.5'/></g><circle cx='8' cy='24' r='3' fill='%23a07aff' stroke='%2304210f' stroke-width='1.2'/><circle cx='24' cy='24' r='3' fill='%23f3eefb' stroke='%2304210f' stroke-width='1.2'/></svg>" />
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/css/mancala.css" />
+  <link rel="stylesheet" href="/css/mill.css" />
+  <link rel="stylesheet" href="/css/hex.css" />
+  <link rel="stylesheet" href="/css/walls.css" />
+  <link rel="stylesheet" href="/css/duels.css" />
+  <link rel="stylesheet" href="/css/bots.css" />
 </head>
 <body>
   <header class="topbar">
@@ -18,10 +24,20 @@
       </svg>
       Tablo
     </a>
-    <label class="name-field">
-      <span>Your name</span>
-      <input id="name" maxlength="20" placeholder="Enter a nickname" autocomplete="nickname" />
-    </label>
+    <div class="top-fields">
+      <label class="name-field">
+        <span>Your name</span>
+        <input id="name" maxlength="20" placeholder="Enter a nickname" autocomplete="nickname" />
+      </label>
+      <label class="name-field bot-field">
+        <span>Computer</span>
+        <select id="bot-level" aria-label="Computer opponent level">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </label>
+    </div>
   </header>
 
   <!-- ============ START MENU ============ -->
@@ -29,7 +45,7 @@
     <section class="hero">
       <div>
         <h1>Pick a game.<br /><span>Challenge a friend.</span></h1>
-        <p>Classic two-player board games, played live in the browser. Open a public table, or send a private invite link.</p>
+        <p>Classic two-player board games, played live in the browser. Open a public table, send a private invite link, or practise against the computer.</p>
       </div>
       <form id="join-form" class="join-card" autocomplete="off">
         <h2>Have a room code?</h2>
@@ -43,10 +59,18 @@
 
     <section class="block">
       <div class="block-head">
-        <h2>Games</h2>
+        <h2>Board games</h2>
         <p>“Play online” lists your table in the lobby · “Invite” makes a private link</p>
       </div>
       <div id="games" class="games-grid"></div>
+    </section>
+
+    <section class="block">
+      <div class="block-head">
+        <h2>Speed duels</h2>
+        <p>Same question for both players, live — first correct answer takes the point</p>
+      </div>
+      <div id="duels" class="games-grid"></div>
     </section>
 
     <section class="block">
