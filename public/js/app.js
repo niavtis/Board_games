@@ -244,7 +244,8 @@ function renderRoom() {
   document.title = (status.tone === 'turn' ? '● ' : '') + `${G.name} · Tablo`;
 
   const board = $('#board');
-  board.innerHTML = '';
+  // ownsBoard games update their DOM in place (keeps running animations); everyone else gets a clean slate.
+  if (!(playing && G.ownsBoard)) board.innerHTML = '';
   board.className = `board-area game-${G.id}`;
   if (playing) G.render(board, st, ctx);
   else renderInvite(board);

@@ -118,9 +118,10 @@ async function play(a, b, moves) {
   // Sea Battle: hidden fleets, touching ships rejected, hit = extra shot, win
   await table('seabattle', a, b);
   [p0, p1] = bySeat(a, b);
-  const fleet = [{ r: 0, c: 0, len: 5, dir: 'h' }, { r: 2, c: 0, len: 4, dir: 'h' }, { r: 4, c: 0, len: 3, dir: 'h' }, { r: 6, c: 0, len: 3, dir: 'h' }, { r: 8, c: 0, len: 2, dir: 'h' }];
+  const fleet = [{ r: 0, c: 0, len: 5, dir: 'h' }, { r: 2, c: 0, len: 4, dir: 'h' }, { r: 4, c: 0, len: 3, dir: 'h' }, { r: 6, c: 0, len: 3, dir: 'h' }, { r: 8, c: 0, len: 2, dir: 'h' },
+    ...[0, 2, 4, 6].map((r) => ({ r, c: 8, len: 1, dir: 'h' }))];
   const touching = fleet.map((s, i) => (i === 1 ? { ...s, r: 1 } : s));
-  assert.match((await call(p0, 'move', { t: 'place', ships: touching })).error, /touch/);
+  assert.match((await call(p0, 'move', { t: 'place', ships: touching })).error, /касаться/);
   await play(a, b, [[0, { t: 'place', ships: fleet }]]);
   assert.deepEqual(p1.view.state.enemyShips, [], 'enemy ships must be hidden');
   await play(a, b, [[1, { t: 'place', ships: fleet }]]);
@@ -130,7 +131,7 @@ async function play(a, b, moves) {
   const targets = fleet.flatMap((s) => Array.from({ length: s.len }, (_, i) => ({ t: 'fire', r: s.r, c: s.c + i })));
   await play(a, b, targets.map((m) => [1, m])); // every hit keeps the turn
   assert.equal(p1.view.state.winner, 1);
-  assert.equal(p1.view.state.reason, 'fleet destroyed');
+  assert.equal(p1.view.state.reason, 'флот уничтожен');
   console.log('PASS sea battle');
 
   // Reconnect with the same player id keeps the seat

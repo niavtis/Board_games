@@ -4,7 +4,7 @@ A start menu with 8 classic board games that two people play live in the browser
 
 | Game | Notes |
 |---|---|
-| Sea Battle | 10×10, fleet 5-4-3-3-2, ships can't touch, a hit gives you another shot. Enemy ships stay hidden on the server. |
+| Sea Battle (Морской бой) | 10×10, fleet 5-4-3-3-2 + four 1-cell boats, ships can't touch, a hit gives you another shot. Enemy ships stay hidden on the server. Russian UI, CSS-3D boards over a sea scene (time of day and landscape switch, fullscreen button). |
 | Chess | Full rules: castling, en passant, promotion picker, check/checkmate, stalemate, 50-move, threefold repetition, insufficient material. Move list in algebraic notation. |
 | Checkers | Mandatory captures, multi-jumps, kings. |
 | Tic Tac Toe | Classic 3×3. |

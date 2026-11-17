@@ -1,7 +1,7 @@
 const { int, grid, turnError } = require('./util');
 
 const SIZE = 10;
-const FLEET = [5, 4, 3, 3, 2];
+const FLEET = [5, 4, 3, 3, 2, 1, 1, 1, 1]; // index = ship model on the client: carrier, battleship, cruiser, sub, destroyer, 4 boats
 const inB = (r, c) => r >= 0 && r < SIZE && c >= 0 && c < SIZE;
 
 function cellsOf(s) {
@@ -34,7 +34,7 @@ function validateFleet(ships) {
 
 module.exports = {
   id: 'seabattle',
-  name: 'Sea Battle',
+  name: 'Морской бой',
   init: () => ({
     phase: 'place',
     ready: [false, false],
@@ -44,23 +44,23 @@ module.exports = {
   }),
   move(s, p, m) {
     if (m.t === 'place') {
-      if (s.phase !== 'place') return 'Ships are already placed';
-      if (s.ready[p]) return 'You are already ready';
+      if (s.phase !== 'place') return 'Флот уже расставлен';
+      if (s.ready[p]) return 'Вы уже готовы';
       const fleet = validateFleet(m.ships);
-      if (!fleet) return 'Invalid fleet: ships must fit on the grid and may not touch';
+      if (!fleet) return 'Неверная расстановка: корабли должны быть на поле и не касаться друг друга';
       s.fleets[p] = fleet;
       s.ready[p] = true;
       if (s.ready[0] && s.ready[1]) s.phase = 'play';
       return null;
     }
-    if (m.t !== 'fire') return 'Unknown action';
-    if (s.phase !== 'play') return 'Both fleets must be placed first';
+    if (m.t !== 'fire') return 'Неизвестное действие';
+    if (s.phase !== 'play') return 'Сначала оба игрока расставляют флот';
     const err = turnError(s, p);
     if (err) return err;
     const r = int(m.r, 0, SIZE - 1), c = int(m.c, 0, SIZE - 1);
-    if (r === null || c === null) return 'Invalid target';
+    if (r === null || c === null) return 'Неверная клетка';
     const t = 1 - p, shots = s.shots[t];
-    if (shots[r][c]) return 'You already fired there';
+    if (shots[r][c]) return 'Сюда уже стреляли';
     const ship = s.fleets[t].find((sh) => cellsOf(sh).some(([y, x]) => y === r && x === c));
     if (!ship) {
       shots[r][c] = 'miss';
@@ -76,10 +76,10 @@ module.exports = {
       res = 'sunk';
       for (const [y, x] of cellsOf(ship)) {
         for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-          if (inB(y + dy, x + dx) && !shots[y + dy][x + dx]) shots[y + dy][x + dx] = 'miss';
+          if (inB(y + dy, x + dx) && !shots[y + dy][x + dx]) shots[y + dy][x + dx] = 'near'; // auto-marked, not a real shot
         }
       }
-      if (s.fleets[t].every((sh) => sh.sunk)) Object.assign(s, { over: true, winner: p, reason: 'fleet destroyed' });
+      if (s.fleets[t].every((sh) => sh.sunk)) Object.assign(s, { over: true, winner: p, reason: 'флот уничтожен' });
     }
     s.last = { by: p, r, c, res }; // a hit earns another shot
     return null;
@@ -87,11 +87,12 @@ module.exports = {
   view(s, p) {
     const o = 1 - p;
     const left = (f) => (f ? f.filter((sh) => !sh.sunk).length : FLEET.length);
+    const idx = (f) => f && f.map((sh, i) => ({ ...sh, i })); // i picks the ship model
     return {
       phase: s.phase, ready: s.ready, turn: s.turn, over: s.over, winner: s.winner, reason: s.reason, last: s.last,
       size: SIZE, fleet: FLEET,
-      myShips: s.fleets[p],
-      enemyShips: s.fleets[o] ? s.fleets[o].filter((sh) => sh.sunk || s.over) : [],
+      myShips: idx(s.fleets[p]),
+      enemyShips: s.fleets[o] ? idx(s.fleets[o]).filter((sh) => sh.sunk || s.over) : [],
       left: [left(s.fleets[0]), left(s.fleets[1])],
       atMe: s.shots[p],
       atThem: s.shots[o],
