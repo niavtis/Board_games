@@ -64,6 +64,7 @@ function sendRoom(room) {
       state: room.state ? (game.view ? game.view(room.state, idx) : room.state) : null,
       rematch: room.rematch,
       chat: room.chat,
+      now: Date.now(), // lets clients sync countdowns to the server clock
     });
   });
 }
@@ -73,10 +74,30 @@ function systemMessage(room, text) {
   if (room.chat.length > 60) room.chat.shift();
 }
 
+// Real-time games (duels) set state.wakeAt; the server calls game.wake() at that moment
+// to advance rounds, then pushes the new state to both players.
+function scheduleWake(room) {
+  clearTimeout(room.wakeTimer);
+  const st = room.state, game = GAMES[room.gameId];
+  if (!st || st.over || !st.wakeAt || !game.wake) return;
+  room.wakeTimer = setTimeout(() => {
+    if (room.state !== st || st.over) return;
+    try {
+      game.wake(st, Date.now());
+    } catch (e) {
+      console.error('wake error', e);
+      return;
+    }
+    scheduleWake(room);
+    sendRoom(room);
+  }, Math.max(0, st.wakeAt - Date.now()));
+}
+
 function startGame(room) {
-  room.state = GAMES[room.gameId].init();
+  room.state = GAMES[room.gameId].init(Date.now());
   room.rematch = [false, false];
   room.gameNo += 1;
+  scheduleWake(room);
 }
 
 function seat(socket, room, name) {
@@ -102,7 +123,9 @@ function scheduleCleanup(room) {
   clearTimeout(room.timer);
   if (room.players.some((p) => p.socketId)) return;
   room.timer = setTimeout(() => {
-    if (!room.players.some((p) => p.socketId)) rooms.delete(room.code);
+    if (room.players.some((p) => p.socketId)) return;
+    clearTimeout(room.wakeTimer);
+    rooms.delete(room.code);
   }, EMPTY_ROOM_TTL);
 }
 
@@ -116,6 +139,7 @@ function leaveCurrent(socket) {
   systemMessage(room, `${gone.name} left the table`);
   room.state = null; // remaining player waits for a new opponent
   room.rematch = [false, false];
+  clearTimeout(room.wakeTimer);
   if (room.players.length === 0) {
     clearTimeout(room.timer);
     rooms.delete(room.code);
@@ -187,6 +211,7 @@ io.on('connection', (socket) => {
     }
     if (err) return reply(cb, { error: err });
     reply(cb, { ok: true });
+    scheduleWake(room);
     sendRoom(room);
   });
 
@@ -195,6 +220,7 @@ io.on('connection', (socket) => {
     if (!room || !room.state || room.state.over || room.players.length < 2) return;
     Object.assign(room.state, { over: true, winner: 1 - idx, reason: 'resignation' });
     systemMessage(room, `${room.players[idx].name} resigned`);
+    clearTimeout(room.wakeTimer);
     sendRoom(room);
   });
 
@@ -232,7 +258,7 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n  Game Night is running`);
+  console.log(`\n  Tablo is running`);
   console.log(`  Local:   http://localhost:${PORT}`);
   for (const ip of lanAddresses()) console.log(`  Network: http://${ip}:${PORT}`);
   console.log('');

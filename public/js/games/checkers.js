@@ -7,11 +7,11 @@ export default {
   name: 'Checkers',
   blurb: 'Jump, chain captures and crown your kings. Captures are mandatory.',
   length: '15 min',
-  sides: ['Red · moves first', 'Black'],
-  swatches: ['#e04838', '#2a2c33'],
-  artBg: '#3b281c',
-  art: `<svg viewBox="0 0 160 90"><g>${Array.from({ length: 40 }, (_, k) => { const r = Math.floor(k / 8), c = k % 8; return `<rect x="${c * 20}" y="${r * 20 - 5}" width="20" height="20" fill="${(r + c) % 2 ? '#6f4b33' : '#e8d7b9'}"/>`; }).join('')}</g>
-    ${[[0,1,1],[0,5,1],[1,2,1],[1,6,1],[3,2,0],[3,4,0],[2,5,0],[3,0,0]].map(([r,c,p])=>`<circle cx="${c*20+10}" cy="${r*20+5}" r="7.5" fill="${p?'#2a2c33':'#e04838'}" stroke="${p?'#55585f':'#ff8a7a'}" stroke-width="1.5"/>`).join('')}</svg>`,
+  sides: ['Green · moves first', 'White'],
+  swatches: ['#2fbf6e', '#ece6f5'],
+  artBg: '#24193a',
+  art: `<svg viewBox="0 0 160 90"><g>${Array.from({ length: 40 }, (_, k) => { const r = Math.floor(k / 8), c = k % 8; return `<rect x="${c * 20}" y="${r * 20 - 5}" width="20" height="20" fill="${(r + c) % 2 ? '#3f2f5c' : '#ece6f5'}"/>`; }).join('')}</g>
+    ${[[0,1,1],[0,5,1],[1,2,1],[1,6,1],[3,2,0],[3,4,0],[2,5,0],[3,0,0]].map(([r,c,p])=>`<circle cx="${c*20+10}" cy="${r*20+5}" r="7.5" fill="${p?'#ece6f5':'#2fbf6e'}" stroke="${p?'#9d8fbd':'#7cf0ae'}" stroke-width="1.5"/>`).join('')}</svg>`,
   rules: ['Pieces move diagonally forward on dark squares; kings move both ways.', 'Captures are mandatory, and a capturing piece must keep jumping if it can.', 'Reach the far row to crown a king. Win by leaving your opponent with no moves.'],
   score: (v) => ({ values: v.pieces, label: 'pieces' }),
   status(v, ctx) {

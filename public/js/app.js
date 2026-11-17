@@ -1,4 +1,4 @@
-import { GAMES, ORDER } from './games/index.js';
+import { GAMES, ORDER, themeVars, themeStyle } from './games/index.js';
 import { h, toast, copyText } from './ui.js';
 
 const $ = (s) => document.querySelector(s);
@@ -42,7 +42,7 @@ function buildMenu() {
   for (const id of ORDER) {
     const G = GAMES[id];
     grid.append(
-      h('article', { class: 'card' },
+      h('article', { class: 'card', style: themeStyle(G) },
         h('div', { class: 'card-art', style: `--art-bg:${G.artBg || '#222838'}`, html: G.art }),
         h('h3', {}, G.name),
         h('p', {}, G.blurb),
@@ -67,7 +67,7 @@ function renderLobby(list) {
   for (const t of list) {
     const G = GAMES[t.gameId];
     ul.append(
-      h('li', {},
+      h('li', { style: themeStyle(G) },
         h('span', { class: 'dot-live' }),
         h('span', { class: 'lobby-game' }, G?.name || t.gameId),
         h('span', { class: 'lobby-host' }, `hosted by ${t.host}`),
@@ -110,7 +110,18 @@ function showMenu() {
   setUrl(null);
   $('#room').hidden = true;
   $('#menu').hidden = false;
-  document.title = 'Game Night — Online Board Games';
+  applyTheme(null);
+  document.title = 'Tablo — Online Board Games';
+}
+
+// Re-color the whole page (logo, glow, buttons) with the current game's palette.
+let themed = [];
+function applyTheme(G) {
+  const root = document.documentElement.style;
+  for (const k of themed) root.removeProperty(k);
+  const vars = themeVars(G);
+  for (const [k, v] of Object.entries(vars)) root.setProperty(k, v);
+  themed = Object.keys(vars);
 }
 
 function showRoom() {
@@ -218,6 +229,7 @@ function renderRoom() {
     rerender: renderRoom,
   };
 
+  applyTheme(G);
   $('#room-title').textContent = G.name;
   $('#room-code').textContent = v.code;
   $('#rules').innerHTML = '';
@@ -229,7 +241,7 @@ function renderRoom() {
   const statusEl = $('#status');
   statusEl.textContent = status.text;
   statusEl.className = `status ${status.tone}`;
-  document.title = (status.tone === 'turn' ? '● ' : '') + `${G.name} · Game Night`;
+  document.title = (status.tone === 'turn' ? '● ' : '') + `${G.name} · Tablo`;
 
   const board = $('#board');
   board.innerHTML = '';

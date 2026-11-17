@@ -1,4 +1,4 @@
-# Game Night — online two-player board games
+# Tablo — online two-player board games
 
 A start menu with 8 classic board games that two people play live in the browser.
 

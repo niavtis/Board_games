@@ -1,5 +1,5 @@
 {
-  "name": "game-night",
+  "name": "tablo",
   "version": "1.0.0",
   "description": "Online two-player board games: Sea Battle, Chess, Checkers, Tic Tac Toe, Connect Four, Reversi, Gomoku, Dots & Boxes",
   "main": "server.js",

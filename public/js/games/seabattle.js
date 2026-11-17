@@ -169,7 +169,7 @@ export default {
   length: '10 min',
   sides: ['Admiral · fires first', 'Admiral'],
   swatches: ['var(--p0)', 'var(--p1)'],
-  artBg: '#0f2a44',
+  artBg: '#0c2f36',
   art: `<svg viewBox="0 0 160 90"><rect width="160" height="90" fill="#133556"/>
     <g stroke="rgba(120,170,220,.18)">${Array.from({ length: 16 }, (_, i) => `<path d="M${i * 10} 0v90"/>`).join('')}${Array.from({ length: 9 }, (_, i) => `<path d="M0 ${i * 10}h160"/>`).join('')}</g>
     <rect x="30" y="40" width="50" height="10" rx="5" fill="#8a97aa"/><rect x="100" y="20" width="10" height="40" rx="5" fill="#8a97aa"/>

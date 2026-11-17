@@ -5,12 +5,12 @@ export default {
   name: 'Dots & Boxes',
   blurb: 'Draw lines between dots. Close a box to claim it — and go again.',
   length: '8 min',
-  sides: ['Red · moves first', 'Blue'],
+  sides: ['Green · moves first', 'Violet'],
   swatches: ['var(--p0)', 'var(--p1)'],
-  artBg: '#1b2030',
-  art: `<svg viewBox="0 0 160 90"><rect x="58" y="22" width="22" height="22" fill="rgba(255,107,87,.25)"/><rect x="80" y="44" width="22" height="22" fill="rgba(69,176,255,.25)"/>
-    <g stroke-width="3.5" stroke-linecap="round"><path stroke="#ff6b57" d="M58 22h22M58 22v22M80 22v22M58 44h22M36 66h22"/><path stroke="#45b0ff" d="M80 44h22M80 66h22M102 44v22M80 44v22M124 22v22"/></g>
-    <g fill="#ecEFf5">${[0,1,2,3,4].flatMap(r=>[0,1,2,3,4].map(c=>`<circle cx="${36+c*22}" cy="${0+r*22}" r="2.6"/>`)).join('')}</g></svg>`,
+  artBg: '#141335',
+  art: `<svg viewBox="0 0 160 90"><rect x="58" y="22" width="22" height="22" fill="rgba(61,220,132,.25)"/><rect x="80" y="44" width="22" height="22" fill="rgba(155,123,255,.25)"/>
+    <g stroke-width="3.5" stroke-linecap="round"><path stroke="#3ddc84" d="M58 22h22M58 22v22M80 22v22M58 44h22M36 66h22"/><path stroke="#9b7bff" d="M80 44h22M80 66h22M102 44v22M80 44v22M124 22v22"/></g>
+    <g fill="#f3eefb">${[0,1,2,3,4].flatMap(r=>[0,1,2,3,4].map(c=>`<circle cx="${36+c*22}" cy="${0+r*22}" r="2.6"/>`)).join('')}</g></svg>`,
   rules: ['On your turn, draw one line between two neighbouring dots.', 'Complete the 4th side of a box to claim it — then you must move again.', 'When all boxes are claimed, the player with the most wins.'],
   score: (v) => ({ values: v.score, label: 'boxes' }),
   render(el, v, ctx) {

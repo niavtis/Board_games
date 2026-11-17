@@ -14,9 +14,9 @@ export default {
   length: '20+ min',
   sides: ['White · moves first', 'Black'],
   swatches: ['#f4f1ea', '#1b1b1f'],
-  artBg: '#2a2117',
-  art: `<svg viewBox="0 0 160 90"><g>${Array.from({ length: 40 }, (_, k) => { const r = Math.floor(k / 8), c = k % 8; return `<rect x="${c * 20}" y="${r * 20 - 5}" width="20" height="20" fill="${(r + c) % 2 ? '#b08a62' : '#eedfc4'}"/>`; }).join('')}</g>
-    <text x="80" y="66" font-size="64" text-anchor="middle" fill="#1b1b1f" stroke="#eedfc4" stroke-width="1.5" font-family="Apple Symbols, Segoe UI Symbol, DejaVu Sans, serif">♞︎</text></svg>`,
+  artBg: '#1e1433',
+  art: `<svg viewBox="0 0 160 90"><g>${Array.from({ length: 40 }, (_, k) => { const r = Math.floor(k / 8), c = k % 8; return `<rect x="${c * 20}" y="${r * 20 - 5}" width="20" height="20" fill="${(r + c) % 2 ? '#8a6fc4' : '#ece5f8'}"/>`; }).join('')}</g>
+    <text x="80" y="66" font-size="64" text-anchor="middle" fill="#1b1b1f" stroke="#ece5f8" stroke-width="1.5" font-family="Apple Symbols, Segoe UI Symbol, DejaVu Sans, serif">♞︎</text></svg>`,
   rules: ['Click one of your pieces to see its legal moves, then click a highlighted square.', 'Checkmate the enemy king to win. Stalemate, repetition, and insufficient material are draws.', 'Pawns reaching the last rank promote — you choose the piece.'],
   render(el, v, ctx) {
     const k = `${ctx.gameKey}:${v.history.length}`;

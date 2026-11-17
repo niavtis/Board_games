@@ -10,10 +10,9 @@ export default {
   length: '1 min',
   sides: ['X · moves first', 'O'],
   swatches: ['var(--p0)', 'var(--p1)'],
-  artBg: '#1b2030',
-  art: `<svg viewBox="0 0 160 90"><g stroke="#3a4256" stroke-width="3" stroke-linecap="round"><path d="M68 20v50M92 20v50M50 38h60M50 54h60"/></g>
-    <g fill="none" stroke-width="5" stroke-linecap="round"><path stroke="#ff6b57" d="M54 22l9 9M63 22l-9 9M78 40l8 8M86 40l-8 8M98 58l8 8M106 58l-8 8"/><circle stroke="#45b0ff" cx="102" cy="28" r="6"/><circle stroke="#45b0ff" cx="58" cy="62" r="6"/></g>
-    <path d="M52 20L108 70" stroke="#f5b84b" stroke-width="2" opacity=".0"/></svg>`,
+  artBg: '#22122d',
+  art: `<svg viewBox="0 0 160 90"><g stroke="#45305a" stroke-width="3" stroke-linecap="round"><path d="M68 20v50M92 20v50M50 38h60M50 54h60"/></g>
+    <g fill="none" stroke-width="5" stroke-linecap="round"><path stroke="#3ddc84" d="M54 22l9 9M63 22l-9 9M78 40l8 8M86 40l-8 8M98 58l8 8M106 58l-8 8"/><circle stroke="#c86bfa" cx="102" cy="28" r="6"/><circle stroke="#c86bfa" cx="58" cy="62" r="6"/></g></svg>`,
   rules: ['Take turns placing your mark in an empty square.', 'First to line up three — row, column or diagonal — wins.', 'Full board with no line is a draw.'],
   render(el, v, ctx) {
     const win = new Set(v.line || []);
