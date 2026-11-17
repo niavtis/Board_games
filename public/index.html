@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Game Night — Online Board Games</title>
+  <meta name="description" content="Play classic board games online with a friend: Sea Battle, Chess, Checkers, Tic Tac Toe, Connect Four, Reversi, Gomoku and Dots & Boxes." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23f5b84b'/><path d='M9 9h6v6H9zM17 17h6v6h-6z' fill='%2314161d'/></svg>" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" id="brand">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      Game&nbsp;Night
+    </a>
+    <label class="name-field">
+      <span>Your name</span>
+      <input id="name" maxlength="20" placeholder="Enter a nickname" autocomplete="nickname" />
+    </label>
+  </header>
+
+  <!-- ============ START MENU ============ -->
+  <main id="menu" class="menu">
+    <section class="hero">
+      <div>
+        <h1>Pick a game.<br /><span>Challenge a friend.</span></h1>
+        <p>Classic two-player board games, played live in the browser. Open a public table, or send a private invite link.</p>
+      </div>
+      <form id="join-form" class="join-card" autocomplete="off">
+        <h2>Have a room code?</h2>
+        <div class="join-row">
+          <input id="join-code" maxlength="5" placeholder="ABCDE" aria-label="Room code" spellcheck="false" />
+          <button class="btn primary" type="submit">Join</button>
+        </div>
+        <p class="hint">Codes are 5 letters, shared by your friend.</p>
+      </form>
+    </section>
+
+    <section class="block">
+      <div class="block-head">
+        <h2>Games</h2>
+        <p>“Play online” lists your table in the lobby · “Invite” makes a private link</p>
+      </div>
+      <div id="games" class="games-grid"></div>
+    </section>
+
+    <section class="block">
+      <div class="block-head">
+        <h2>Open tables <span id="lobby-count" class="pill">0</span></h2>
+        <p>Players waiting for an opponent right now</p>
+      </div>
+      <ul id="lobby" class="lobby"></ul>
+    </section>
+  </main>
+
+  <!-- ============ ROOM ============ -->
+  <main id="room" class="room" hidden>
+    <div class="stage">
+      <div class="room-head">
+        <button class="btn ghost small" id="leave">← Menu</button>
+        <h2 id="room-title">Game</h2>
+        <button class="code-chip" id="copy-code" title="Copy invite link">
+          Room <b id="room-code">—</b> <span aria-hidden="true">⧉</span>
+        </button>
+      </div>
+
+      <div class="players" id="players"></div>
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+      <div class="board-area" id="board"></div>
+
+      <div class="actions" id="actions">
+        <button class="btn ghost" id="resign">Resign</button>
+        <button class="btn primary" id="rematch">Rematch</button>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="panel chat">
+        <h3>Table chat</h3>
+        <ul id="chat-log" class="chat-log"></ul>
+        <form id="chat-form" class="chat-form" autocomplete="off">
+          <input id="chat-input" maxlength="240" placeholder="Say something nice…" />
+          <button class="btn small" type="submit">Send</button>
+        </form>
+      </div>
+      <div class="panel rules" id="rules"></div>
+    </aside>
+  </main>
+
+  <div id="toasts" class="toasts" aria-live="assertive"></div>
+  <div id="conn" class="conn" hidden>Reconnecting…</div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
